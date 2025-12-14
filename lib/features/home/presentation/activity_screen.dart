@@ -76,6 +76,15 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                                 leading: const Icon(Icons.local_taxi),
                                 title: Text("To ${ride.destination}"),
                                 subtitle: Text("${ride.availableSeats} seats left • ₹${ride.price.toInt()}"),
+                                trailing: IconButton(
+                                    icon: const Icon(Icons.chat_bubble_outline),
+                                    onPressed: () {
+                                        context.push('/chat', extra: {
+                                            'rideId': ride.id,
+                                            'title': "Ride to ${ride.destination}",
+                                        });
+                                    },
+                                ),
                             );
                         }
                     ),

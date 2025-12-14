@@ -113,9 +113,81 @@ class AdminRepository {
       'occupancy_rate': totalSeats > 0 ? (bookedSeats / totalSeats * 100).toStringAsFixed(1) : '0.0',
     };
   }
+  // --- ENGAGEMENT & ANALYTICS ---
+
+  // Calculate total hours for a driver
+  Future<double> getDriverTotalHours(String driverId) async {
+    final response = await _supabase
+        .from('shift_logs')
+        .select('check_in_time, check_out_time')
+        .eq('driver_id', driverId)
+        .not('check_out_time', 'is', null);
+    
+    double totalHours = 0;
+    for (var shift in response) {
+      final start = DateTime.parse(shift['check_in_time']);
+      final end = DateTime.parse(shift['check_out_time']);
+      totalHours += end.difference(start).inMinutes / 60.0;
+    }
+    return totalHours; 
+  }
+
+  Future<List<Map<String, dynamic>>> getCustomers() async {
+    final response = await _supabase
+        .from('profiles')
+        .select()
+        .eq('role', 'customer')
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  Future<List<Map<String, dynamic>>> getPromotions() async {
+    final response = await _supabase
+        .from('promotions')
+        .select()
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  Future<void> createPromotion(String code, String description, double amount, String targetRole) async {
+    await _supabase.from('promotions').insert({
+      'code': code,
+      'description': description,
+      'discount_amount': amount,
+      'target_role': targetRole,
+    });
+  }
+
+  Future<void> sendNotification(String userId, String title, String message) async {
+    await _supabase.from('notifications').insert({
+      'user_id': userId,
+      'title': title,
+      'message': message,
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getUserNotifications(String userId) async {
+    final response = await _supabase
+        .from('notifications')
+        .select()
+        .eq('user_id', userId)
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  // Delete User (Secure RPC)
+  Future<void> deleteUser(String userId) async {
+    await _supabase.rpc('delete_user_by_admin', params: {'target_user_id': userId});
+  }
 }
 
 final allDriversProvider = FutureProvider.autoDispose((ref) async {
   final repo = ref.read(adminRepositoryProvider);
   return repo.getDrivers();
+});
+
+final allCustomersProvider = FutureProvider((ref) => ref.read(adminRepositoryProvider).getCustomers());
+final allPromotionsProvider = FutureProvider.autoDispose((ref) => ref.read(adminRepositoryProvider).getPromotions());
+final driverHoursProvider = FutureProvider.family<double, String>((ref, driverId) async {
+  return ref.read(adminRepositoryProvider).getDriverTotalHours(driverId);
 });

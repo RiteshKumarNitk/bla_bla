@@ -9,6 +9,7 @@ import 'package:bla_bla/features/ride/presentation/search_results_screen.dart';
 import 'package:bla_bla/features/ride/presentation/ride_detail_screen.dart';
 import 'package:bla_bla/features/ride/domain/ride_model.dart';
 import 'package:bla_bla/features/chat/presentation/chat_screen.dart';
+import 'package:bla_bla/features/home/presentation/notifications_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
@@ -70,6 +71,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             title: extras['title'],
           );
         },
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationsScreen(),
       ),
     ],
   );
