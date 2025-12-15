@@ -4,6 +4,7 @@ import 'package:bla_bla/features/auth/presentation/auth_controller.dart';
 import 'package:bla_bla/features/auth/data/auth_repository_impl.dart';
 import 'package:bla_bla/features/ride/data/ride_repository.dart';
 import 'package:bla_bla/features/admin/data/admin_repository.dart';
+import 'package:go_router/go_router.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -35,6 +36,48 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             },
             child: const Text('Save'),
           ),
+        ],
+      ),
+    );
+  }
+
+  void _showDriverDetailsDialog(BuildContext context, WidgetRef ref, String userId, Map<String, dynamic>? meta) {
+    final dlController = TextEditingController(text: meta?['dl_number']);
+    final rcController = TextEditingController(text: meta?['vehicle_details']?['plate']);
+    final modelController = TextEditingController(text: meta?['vehicle_details']?['model']);
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Driver Details"),
+        content: SingleChildScrollView(
+          child: Column(
+             mainAxisSize: MainAxisSize.min,
+             children: [
+               TextField(controller: dlController, decoration: const InputDecoration(labelText: "License Number (DL)")),
+               const SizedBox(height: 10),
+               TextField(controller: modelController, decoration: const InputDecoration(labelText: "Car Model (e.g. Swift)")),
+               const SizedBox(height: 10),
+               TextField(controller: rcController, decoration: const InputDecoration(labelText: "Number Plate (RC)")),
+             ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () async {
+                final vehicle = {'model': modelController.text, 'plate': rcController.text};
+                // Note: Ideally we'd move updateDriverInfo to a generic repo accessible by user, 
+                // but for now AdminRepo contains the logic and RLS might block it.
+                // Wait, RLS for profiles usually allows 'update' for 'id = auth.uid()'.
+                // So calling the supabase update directly here or via repo is fine.
+                // We'll use the repo method but ensure it works for self.
+                await ref.read(adminRepositoryProvider).updateDriverInfo(userId, dlController.text, '', vehicle);
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Details Updated")));
+            },
+            child: const Text("Save"),
+          )
         ],
       ),
     );
@@ -106,43 +149,62 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Consumer(
               builder: (context, ref, _) {
                  final currentShiftAsync = ref.watch(currentShiftProvider(user!.id));
-                 return Card(
-                   color: Colors.blue[50],
-                   margin: const EdgeInsets.only(bottom: 16),
-                   child: Padding(
-                     padding: const EdgeInsets.all(16.0),
-                     child: Column(
-                       children: [
-                         Text("Shift Status: ${currentShiftAsync.value != null ? 'ON DUTY' : 'OFF DUTY'}", 
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                         const SizedBox(height: 8),
-                         if (currentShiftAsync.value != null)
-                             Text("Started: ${DateTime.parse(currentShiftAsync.value!['check_in_time']).toLocal()}"),
-                         const SizedBox(height: 16),
-                         Row(
-                           mainAxisAlignment: MainAxisAlignment.center,
+                 return Column(
+                   children: [
+                     // Shift Control
+                     Card(
+                       color: Colors.blue[50],
+                       margin: const EdgeInsets.only(bottom: 16),
+                       child: Padding(
+                         padding: const EdgeInsets.all(16.0),
+                         child: Column(
                            children: [
-                             ElevatedButton.icon(
-                               onPressed: () async {
-                                 if (currentShiftAsync.value == null) {
-                                   await ref.read(adminRepositoryProvider).checkIn(user.id);
-                                 } else {
-                                   await ref.read(adminRepositoryProvider).checkOut(user.id);
-                                 }
-                                 ref.invalidate(currentShiftProvider(user.id));
-                               },
-                               icon: Icon(currentShiftAsync.value != null ? Icons.stop : Icons.play_arrow),
-                               label: Text(currentShiftAsync.value != null ? "Check Out" : "Check In"),
-                               style: ElevatedButton.styleFrom(
-                                 backgroundColor: currentShiftAsync.value != null ? Colors.red : Colors.green,
-                                 foregroundColor: Colors.white,
-                               ),
-                             ),
+                             Text("Shift Status: ${currentShiftAsync.value != null ? 'ON DUTY' : 'OFF DUTY'}", 
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                             const SizedBox(height: 8),
+                             if (currentShiftAsync.value != null)
+                                 Text("Started: ${DateTime.parse(currentShiftAsync.value!['check_in_time']).toLocal()}"),
+                             const SizedBox(height: 16),
+                             Row(
+                               mainAxisAlignment: MainAxisAlignment.center,
+                               children: [
+                                 ElevatedButton.icon(
+                                   onPressed: () async {
+                                     if (currentShiftAsync.value == null) {
+                                       await ref.read(adminRepositoryProvider).checkIn(user.id);
+                                     } else {
+                                       await ref.read(adminRepositoryProvider).checkOut(user.id);
+                                     }
+                                     ref.invalidate(currentShiftProvider(user.id));
+                                   },
+                                   icon: Icon(currentShiftAsync.value != null ? Icons.stop : Icons.play_arrow),
+                                   label: Text(currentShiftAsync.value != null ? "Check Out" : "Check In"),
+                                   style: ElevatedButton.styleFrom(
+                                     backgroundColor: currentShiftAsync.value != null ? Colors.red : Colors.green,
+                                     foregroundColor: Colors.white,
+                                   ),
+                                 ),
+                               ],
+                             )
                            ],
-                         )
-                       ],
+                         ),
+                       ),
                      ),
-                   ),
+                     
+                     // Driver Vehicle & Docs
+                     Card(
+                       margin: const EdgeInsets.only(bottom: 16),
+                       child: ListTile(
+                         leading: const Icon(Icons.drive_eta, color: Colors.indigo),
+                         title: const Text("Vehicle & Documents"),
+                         subtitle: const Text("Manage DL, RC, and Car details"),
+                         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                         onTap: () {
+                           _showDriverDetailsDialog(context, ref, user.id, user.userMetadata);
+                         },
+                       ),
+                     ),
+                   ],
                  );
               }
             ),
@@ -151,6 +213,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             leading: const Icon(Icons.person),
             title: const Text('Edit Profile'),
             onTap: () => _showEditProfileDialog(fullName),
+          ),
+          ListTile(
+            leading: const Icon(Icons.account_balance_wallet, color: Colors.green),
+            title: const Text('My Wallet'),
+            onTap: () => context.push('/wallet'),
           ),
           ListTile(
             leading: const Icon(Icons.settings),

@@ -71,9 +71,57 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
           // 1. Full Screen Map
           GoogleMap(
             initialCameraPosition: _kInitialPosition,
-            myLocationEnabled: false, // Keep false for detail view to focus on route
+            myLocationEnabled: false, 
             zoomControlsEnabled: false,
-            onMapCreated: (controller) => _mapController = controller,
+            markers: {
+                if (widget.ride.originLat != null && widget.ride.originLng != null)
+                    Marker(
+                        markerId: const MarkerId('origin'),
+                        position: LatLng(widget.ride.originLat!, widget.ride.originLng!),
+                        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+                        infoWindow: InfoWindow(title: widget.ride.origin),
+                    ),
+                if (widget.ride.destLat != null && widget.ride.destLng != null)
+                   Marker(
+                        markerId: const MarkerId('dest'),
+                        position: LatLng(widget.ride.destLat!, widget.ride.destLng!),
+                        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+                        infoWindow: InfoWindow(title: widget.ride.destination),
+                   ),
+            },
+            polylines: {
+                if (widget.ride.originLat != null && widget.ride.originLng != null && widget.ride.destLat != null && widget.ride.destLng != null)
+                    Polyline(
+                        polylineId: const PolylineId('route'),
+                        points: [
+                            LatLng(widget.ride.originLat!, widget.ride.originLng!),
+                            LatLng(widget.ride.destLat!, widget.ride.destLng!),
+                        ],
+                        color: Colors.blue,
+                        width: 5,
+                    )
+            },
+            onMapCreated: (controller) {
+                _mapController = controller;
+                // Fit bounds
+                if (widget.ride.originLat != null && widget.ride.originLng != null && widget.ride.destLat != null && widget.ride.destLng != null) {
+                    Future.delayed(const Duration(milliseconds: 500), () {
+                        controller.animateCamera(CameraUpdate.newLatLngBounds(
+                            LatLngBounds(
+                                southwest: LatLng(
+                                    widget.ride.originLat! < widget.ride.destLat! ? widget.ride.originLat! : widget.ride.destLat!,
+                                    widget.ride.originLng! < widget.ride.destLng! ? widget.ride.originLng! : widget.ride.destLng!,
+                                ),
+                                northeast: LatLng(
+                                    widget.ride.originLat! > widget.ride.destLat! ? widget.ride.originLat! : widget.ride.destLat!,
+                                    widget.ride.originLng! > widget.ride.destLng! ? widget.ride.originLng! : widget.ride.destLng!,
+                                ),
+                            ),
+                            50 // padding
+                        ));
+                    });
+                }
+            },
           ),
 
           // 2. Bottom Card
