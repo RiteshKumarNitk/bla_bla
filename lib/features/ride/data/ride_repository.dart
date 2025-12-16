@@ -103,4 +103,15 @@ class RideRepository {
         .order('created_at', ascending: false);
     return List<Map<String, dynamic>>.from(response);
   }
+  Future<void> updateRideLocation(String rideId, double lat, double lng) async {
+    await _supabase.rpc('update_ride_location', params: {
+      'ride_id_input': rideId,
+      'lat': lat,
+      'lng': lng,
+    });
+  }
+  
+  Stream<Ride> getRideStream(String rideId) {
+    return _supabase.from('rides').stream(primaryKey: ['id']).eq('id', rideId).map((event) => Ride.fromJson(event.first));
+  }
 }

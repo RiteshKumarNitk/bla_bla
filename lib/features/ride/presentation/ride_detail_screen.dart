@@ -16,7 +16,7 @@ class RideDetailScreen extends ConsumerStatefulWidget {
 
 class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
   // Placeholder for map controller
-  late GoogleMapController _mapController;
+  // late GoogleMapController _mapController;
   bool _isBooking = false;
 
   static const CameraPosition _kInitialPosition = CameraPosition(
@@ -27,7 +27,7 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
   Future<void> _handleBooking() async {
       final user = ref.read(authRepositoryProvider).currentUser;
       if (user == null) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please login to book")));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please login to book')));
           return;
       }
 
@@ -36,12 +36,12 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
       try {
           await ref.read(rideRepositoryProvider).createBooking(widget.ride.id, user.id, 1);
           if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Booking Confirmed!")));
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Booking Confirmed!')));
               Navigator.of(context).pop();
           }
       } catch (e) {
           if (mounted) {
-             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Booking Failed: $e")));
+             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Booking Failed: $e')));
           }
       } finally {
           if (mounted) setState(() => _isBooking = false);
@@ -50,6 +50,9 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final rideStream = ref.watch(rideStreamProvider(widget.ride.id));
+    final liveRide = rideStream.asData?.value ?? widget.ride;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -88,6 +91,13 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
                         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
                         infoWindow: InfoWindow(title: widget.ride.destination),
                    ),
+                if (liveRide.currentLat != null && liveRide.currentLng != null)
+                   Marker(
+                        markerId: const MarkerId('driver'),
+                        position: LatLng(liveRide.currentLat!, liveRide.currentLng!),
+                        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+                        infoWindow: const InfoWindow(title: 'Driver Location'),
+                   ),
             },
             polylines: {
                 if (widget.ride.originLat != null && widget.ride.originLng != null && widget.ride.destLat != null && widget.ride.destLng != null)
@@ -102,7 +112,6 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
                     )
             },
             onMapCreated: (controller) {
-                _mapController = controller;
                 // Fit bounds
                 if (widget.ride.originLat != null && widget.ride.originLng != null && widget.ride.destLat != null && widget.ride.destLng != null) {
                     Future.delayed(const Duration(milliseconds: 500), () {
@@ -151,21 +160,21 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
                 children: [
                   Column(
                     children: [
-                      Text("0 mile", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text("Distance", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text('0 mile', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text('Distance', style: TextStyle(color: Colors.grey, fontSize: 12)),
                     ],
                   ),
                   Icon(Icons.arrow_forward, color: Colors.redAccent),
                   Column(
                     children: [
-                      Text("1 min", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text("Duration", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text('1 min', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text('Duration', style: TextStyle(color: Colors.grey, fontSize: 12)),
                     ],
                   ),
                   Column(
                     children: [
-                      Text("10:05 PM", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text("Arrival", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text('10:05 PM', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text('Arrival', style: TextStyle(color: Colors.grey, fontSize: 12)),
                     ],
                   ),
                 ],
@@ -207,12 +216,12 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "#RIDE-₹${widget.ride.price.toInt()}", 
+                        '#RIDE-₹${widget.ride.price.toInt()}', 
                         style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        "Status\n${widget.ride.availableSeats} seats available", 
+                        'Status\n${widget.ride.availableSeats} seats available', 
                         style: const TextStyle(fontSize: 12, color: Colors.black54),
                       ),
                     ],
@@ -226,11 +235,11 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
           const SizedBox(height: 20),
 
           // Details List
-          _buildInfoRow("Driver", "John Doe"), // Placeholder
-          _buildInfoRow("Car", widget.ride.carModel ?? "Toyota Prius"),
-          _buildInfoRow("Origin", widget.ride.origin),
-          _buildInfoRow("Destination", widget.ride.destination),
-          _buildInfoRow("Payment", "Cash"),
+          _buildInfoRow('Driver', 'John Doe'), // Placeholder
+          _buildInfoRow('Car', widget.ride.carModel ?? 'Toyota Prius'),
+          _buildInfoRow('Origin', widget.ride.origin),
+          _buildInfoRow('Destination', widget.ride.destination),
+          _buildInfoRow('Payment', 'Cash'),
 
           const SizedBox(height: 20),
           
@@ -242,7 +251,7 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Text(
-              "Please ensure you arrive 5 minutes before departure.",
+              'Please ensure you arrive 5 minutes before departure.',
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ),
@@ -275,7 +284,7 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
                   Expanded(
                     child: Center(
                       child: Text(
-                        _isBooking ? "Booking..." : "Slide to book ride",
+                        _isBooking ? 'Booking...' : 'Slide to book ride',
                         style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
                       ),
                     ),
@@ -303,3 +312,7 @@ class _RideDetailScreenState extends ConsumerState<RideDetailScreen> {
     );
   }
 }
+
+final rideStreamProvider = StreamProvider.family<Ride, String>((ref, rideId) {
+  return ref.watch(rideRepositoryProvider).getRideStream(rideId);
+});

@@ -79,10 +79,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
                 padding: const EdgeInsets.all(24),
-                child: Column(
+                child: const Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       'Where do you want to go?',
                       style: TextStyle(
                         color: Colors.white,
@@ -134,7 +134,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 const Icon(Icons.calendar_today, color: Colors.grey),
                                 const SizedBox(width: 12),
                                 Text(
-                                  "${_selectedDate.toLocal()}".split(' ')[0],
+                                  '${_selectedDate.toLocal()}'.split(' ')[0],
                                   style: const TextStyle(fontSize: 16),
                                 ),
                               ],
@@ -149,7 +149,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                              children: [
                                Icon(Icons.person_outline, color: Colors.grey),
                                SizedBox(width: 12),
-                               Text("1 Passenger", style: TextStyle(fontSize: 16)),
+                               Text('1 Passenger', style: TextStyle(fontSize: 16)),
                              ],
                            ),
                          ),

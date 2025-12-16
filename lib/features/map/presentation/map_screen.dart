@@ -54,7 +54,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       _currentPosition = LatLng(position.latitude, position.longitude);
     });
 
-    _mapController?.animateCamera(
+    await _mapController?.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(
           target: _currentPosition!,
@@ -64,7 +64,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
     
     // Simulate fetching nearby rides (since DB might not have coords yet)
-    _loadNearbyRides(position.latitude, position.longitude);
+    await _loadNearbyRides(position.latitude, position.longitude);
   }
 
   Set<Polyline> _polylines = {};
@@ -83,8 +83,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         markerId: MarkerId(ride.id),
                         position: LatLng(ride.originLat!, ride.originLng!),
                         infoWindow: InfoWindow(
-                            title: "To ${ride.destination}",
-                            snippet: "₹${ride.price} • Tap for details",
+                            title: 'To ${ride.destination}',
+                            snippet: '₹${ride.price} • Tap for details',
                             onTap: () {
                                 // Draw route logic is visual only for now
                                 if (ride.destLat != null && ride.destLng != null) {
@@ -108,7 +108,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             });
         }
     } catch (e) {
-        debugPrint("Error loading rides: $e");
+        debugPrint('Error loading rides: $e');
     }
   }
 

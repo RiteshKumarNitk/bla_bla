@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bla_bla/features/chat/data/chat_repository.dart';
 import 'package:bla_bla/features/chat/domain/message_model.dart';
-import 'package:bla_bla/features/auth/data/auth_repository_impl.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final String rideId;
@@ -42,7 +41,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             child: messagesStream.when(
               data: (messages) {
                 if (messages.isEmpty) {
-                  return const Center(child: Text("Start the conversation!"));
+                  return const Center(child: Text('Start the conversation!'));
                 }
                 return ListView.builder(
                   reverse: true, // Show newest at bottom if we reversed the list, but stream is ordered asc. 
@@ -59,7 +58,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text("Error: $err")),
+              error: (err, stack) => Center(child: Text('Error: $err')),
             ),
           ),
           _buildInputArea(),
@@ -99,7 +98,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5, offset: const Offset(0, -2)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 5, offset: const Offset(0, -2)),
         ],
       ),
       child: Row(
@@ -108,7 +107,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             child: TextField(
               controller: _messageController,
               decoration: const InputDecoration(
-                hintText: "Type a message...",
+                hintText: 'Type a message...',
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(horizontal: 16),
               ),

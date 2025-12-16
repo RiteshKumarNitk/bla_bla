@@ -102,7 +102,7 @@ class AdminRepository {
        availableSeats += (r['available_seats'] as int);
     }
     
-    int bookedSeats = totalSeats - availableSeats;
+    final int bookedSeats = totalSeats - availableSeats;
     
     return {
       'total_drivers': drivers,

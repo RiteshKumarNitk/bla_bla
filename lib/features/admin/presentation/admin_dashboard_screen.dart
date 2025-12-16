@@ -23,11 +23,11 @@ class AdminDashboardScreen extends ConsumerWidget {
           bottom: const TabBar(
             isScrollable: true,
             tabs: [
-              Tab(text: "Rides"),
-              Tab(text: "Drivers"),
-              Tab(text: "Offers"),
-              Tab(text: "Customers"),
-              Tab(text: "Stats"),
+              Tab(text: 'Rides'),
+              Tab(text: 'Drivers'),
+              Tab(text: 'Offers'),
+              Tab(text: 'Customers'),
+              Tab(text: 'Stats'),
             ],
           ),
           actions: [
@@ -70,12 +70,12 @@ class _RidesList extends ConsumerWidget {
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: ListTile(
               leading: const CircleAvatar(backgroundColor: Colors.red, child: Icon(Icons.local_taxi, color: Colors.white)),
-              title: Text("${ride.origin} -> ${ride.destination}"),
-              subtitle: Text("Driver: ${ride.driverId}\nPrice: ₹${ride.price}"),
+              title: Text('${ride.origin} -> ${ride.destination}'),
+              subtitle: Text('Driver: ${ride.driverId}\nPrice: ₹${ride.price}'),
               trailing: IconButton(
                 icon: const Icon(Icons.delete, color: Colors.red),
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Delete not implemented yet")));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Delete not implemented yet')));
                 },
               ),
             ),
@@ -83,7 +83,7 @@ class _RidesList extends ConsumerWidget {
         },
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => Center(child: Text("Error: $err")),
+      error: (err, stack) => Center(child: Text('Error: $err')),
     );
   }
 }
@@ -109,9 +109,9 @@ class _DriversList extends ConsumerWidget {
               ),
               title: Text(driver['full_name'] ?? 'Unknown Driver'),
               subtitle: hoursAsync.when(
-                  data: (h) => Text("Total Hours: ${h.toStringAsFixed(1)} hrs"),
-                  loading: () => const Text("Calculating hours..."),
-                  error: (_,__) => const Text("Hours: N/A")
+                  data: (h) => Text('Total Hours: ${h.toStringAsFixed(1)} hrs'),
+                  loading: () => const Text('Calculating hours...'),
+                  error: (_,__) => const Text('Hours: N/A')
               ),
               children: [
                 Padding(
@@ -132,12 +132,12 @@ class _DriversList extends ConsumerWidget {
                                // Send Bonus Notification
                                ref.read(adminRepositoryProvider).sendNotification(
                                  driver['id'], 
-                                 "Bonus Earned!", 
-                                 "You have earned a ₹200 bonus for your performance."
+                                 'Bonus Earned!', 
+                                 'You have earned a ₹200 bonus for your performance.'
                                );
-                               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Bonus sent!")));
+                               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bonus sent!')));
                              },
-                             child: const Text("Send Bonus"),
+                             child: const Text('Send Bonus'),
                           ),
                           ElevatedButton.icon(
                             onPressed: () async {
@@ -145,7 +145,7 @@ class _DriversList extends ConsumerWidget {
                                 ref.invalidate(allDriversProvider);
                             },
                             icon: Icon(isVerified ? Icons.close : Icons.check),
-                            label: Text(isVerified ? "Un-verify" : "Verify Driver"),
+                            label: Text(isVerified ? 'Un-verify' : 'Verify Driver'),
                             style: ElevatedButton.styleFrom(
                                 backgroundColor: isVerified ? Colors.red : Colors.green,
                                 foregroundColor: Colors.white,
@@ -157,11 +157,11 @@ class _DriversList extends ConsumerWidget {
                               final confirm = await showDialog<bool>(
                                 context: context,
                                 builder: (ctx) => AlertDialog(
-                                  title: const Text("Delete Driver?"),
-                                  content: const Text("This cannot be undone."),
+                                  title: const Text('Delete Driver?'),
+                                  content: const Text('This cannot be undone.'),
                                   actions: [
-                                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
-                                    TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Delete", style: TextStyle(color: Colors.red))),
+                                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                                    TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
                                   ],
                                 ),
                               );
@@ -172,7 +172,7 @@ class _DriversList extends ConsumerWidget {
                               }
                             },
                              icon: const Icon(Icons.delete, color: Colors.white),
-                             label: const Text("Delete"),
+                             label: const Text('Delete'),
                              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                           ),
                         ],
@@ -186,7 +186,7 @@ class _DriversList extends ConsumerWidget {
         },
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => Center(child: Text("Error: $err")),
+      error: (err, stack) => Center(child: Text('Error: $err')),
     );
   }
 }
@@ -210,8 +210,8 @@ class _CustomersList extends ConsumerWidget {
                     IconButton(
                         icon: const Icon(Icons.notifications_active, color: Colors.blue),
                         onPressed: () {
-                            ref.read(adminRepositoryProvider).sendNotification(cust['id'], "Special Offer", "Use code WELCOME200");
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Offer sent!")));
+                            ref.read(adminRepositoryProvider).sendNotification(cust['id'], 'Special Offer', 'Use code WELCOME200');
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Offer sent!')));
                         },
                     ),
                     IconButton(
@@ -220,11 +220,11 @@ class _CustomersList extends ConsumerWidget {
                              final confirm = await showDialog<bool>(
                                 context: context,
                                 builder: (ctx) => AlertDialog(
-                                  title: const Text("Delete Customer?"),
-                                  content: const Text("This cannot be undone."),
+                                  title: const Text('Delete Customer?'),
+                                  content: const Text('This cannot be undone.'),
                                   actions: [
-                                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
-                                    TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Delete", style: TextStyle(color: Colors.red))),
+                                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                                    TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
                                   ],
                                 ),
                               );
@@ -241,7 +241,7 @@ class _CustomersList extends ConsumerWidget {
         },
       ), 
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e,s) => Text("Error: $e"),
+      error: (e,s) => Text('Error: $e'),
     );
   }
 }
@@ -257,15 +257,15 @@ class _EngagementPanel extends ConsumerWidget {
         children: [
           ElevatedButton.icon(
             icon: const Icon(Icons.add),
-            label: const Text("Create New Promo Code"),
+            label: const Text('Create New Promo Code'),
             onPressed: () {
                 // Simplified creation for MVP
-                ref.read(adminRepositoryProvider).createPromotion("FLASH50", "Flash Sale 50 Off", 50.0, "all");
+                ref.read(adminRepositoryProvider).createPromotion('FLASH50', 'Flash Sale 50 Off', 50.0, 'all');
                 ref.invalidate(allPromotionsProvider);
             },
           ),
           const Divider(),
-          const Text("Active Promotions", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text('Active Promotions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           Expanded(
             child: promotionsAsync.when(
                 data: (promos) => ListView.builder(
@@ -279,7 +279,7 @@ class _EngagementPanel extends ConsumerWidget {
                     ),
                 ),
                 loading: () => const LinearProgressIndicator(),
-                error: (e,s) => Text("Error: $e"),
+                error: (e,s) => Text('Error: $e'),
             ),
           )
         ],
@@ -305,23 +305,23 @@ class _FleetStats extends ConsumerWidget {
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
           children: [
-            _StatCard("Total Drivers", "${stats['total_drivers']}", Colors.blue),
-            _StatCard("Active Shifts", "${stats['active_drivers']}", Colors.green),
-            _StatCard("Rides Today", "${stats['rides_today']}", Colors.orange),
-            _StatCard("Occupancy Rate", "${stats['occupancy_rate']}%", Colors.purple),
-            _StatCard("Booked Seats", "${stats['booked_seats']}", Colors.redAccent),
-            _StatCard("Total Capacity", "${stats['total_seats']}", Colors.teal),
+            _statCard('Total Drivers', "${stats['total_drivers']}", Colors.blue),
+            _statCard('Active Shifts', "${stats['active_drivers']}", Colors.green),
+            _statCard('Rides Today', "${stats['rides_today']}", Colors.orange),
+            _statCard('Occupancy Rate', "${stats['occupancy_rate']}%", Colors.purple),
+            _statCard('Booked Seats', "${stats['booked_seats']}", Colors.redAccent),
+            _statCard('Total Capacity', "${stats['total_seats']}", Colors.teal),
           ],
         ),
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, s) => Center(child: Text("Error: $e")),
+      error: (e, s) => Center(child: Text('Error: $e')),
     );
   }
   
-  Widget _StatCard(String title, String value, Color color) {
+  Widget _statCard(String title, String value, Color color) {
     return Card(
-      color: color.withOpacity(0.1),
+      color: color.withValues(alpha: 0.1),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

@@ -32,7 +32,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             onPressed: () async {
               Navigator.pop(context);
               await ref.read(authRepositoryProvider).updateProfile(name: _nameController.text);
-              setState(() {}); // Refresh UI
+              if (mounted) {
+                  setState(() {}); // Refresh UI
+              }
             },
             child: const Text('Save'),
           ),
@@ -49,21 +51,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Driver Details"),
+        title: const Text('Driver Details'),
         content: SingleChildScrollView(
           child: Column(
              mainAxisSize: MainAxisSize.min,
              children: [
-               TextField(controller: dlController, decoration: const InputDecoration(labelText: "License Number (DL)")),
+               TextField(controller: dlController, decoration: const InputDecoration(labelText: 'License Number (DL)')),
                const SizedBox(height: 10),
-               TextField(controller: modelController, decoration: const InputDecoration(labelText: "Car Model (e.g. Swift)")),
+               TextField(controller: modelController, decoration: const InputDecoration(labelText: 'Car Model (e.g. Swift)')),
                const SizedBox(height: 10),
-               TextField(controller: rcController, decoration: const InputDecoration(labelText: "Number Plate (RC)")),
+               TextField(controller: rcController, decoration: const InputDecoration(labelText: 'Number Plate (RC)')),
              ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () async {
                 final vehicle = {'model': modelController.text, 'plate': rcController.text};
@@ -73,10 +75,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 // So calling the supabase update directly here or via repo is fine.
                 // We'll use the repo method but ensure it works for self.
                 await ref.read(adminRepositoryProvider).updateDriverInfo(userId, dlController.text, '', vehicle);
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Details Updated")));
+                if (context.mounted) {
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Details Updated')));
+                }
             },
-            child: const Text("Save"),
+            child: const Text('Save'),
           )
         ],
       ),
@@ -118,10 +122,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const SizedBox(height: 8),
                  reviewsAsync.when(
                   data: (reviews) {
-                    if (reviews.isEmpty) return const Text("No ratings yet", style: TextStyle(color: Colors.orange));
+                    if (reviews.isEmpty) return const Text('No ratings yet', style: TextStyle(color: Colors.orange));
                     
                     double total = 0;
-                    for(var r in reviews) total += (r['rating'] as int);
+                    for(var r in reviews) {
+                      total += (r['rating'] as int);
+                    }
                     final average = total / reviews.length;
                     
                     return Row(
@@ -130,14 +136,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                          const Icon(Icons.star, color: Colors.amber, size: 20),
                          const SizedBox(width: 4),
                          Text(
-                             "${average.toStringAsFixed(1)} (${reviews.length} reviews)",
+                             '${average.toStringAsFixed(1)} (${reviews.length} reviews)',
                              style: const TextStyle(fontWeight: FontWeight.bold),
                          ),
                       ],
                     );
                   },
                   loading: () => const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-                  error: (err, stack) => Text("Error loading ratings", style: TextStyle(color: Colors.red[200], fontSize: 12)),
+                  error: (err, stack) => Text('Error loading ratings', style: TextStyle(color: Colors.red[200], fontSize: 12)),
                 ),
               ],
             ),
@@ -178,7 +184,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                      ref.invalidate(currentShiftProvider(user.id));
                                    },
                                    icon: Icon(currentShiftAsync.value != null ? Icons.stop : Icons.play_arrow),
-                                   label: Text(currentShiftAsync.value != null ? "Check Out" : "Check In"),
+                                   label: Text(currentShiftAsync.value != null ? 'Check Out' : 'Check In'),
                                    style: ElevatedButton.styleFrom(
                                      backgroundColor: currentShiftAsync.value != null ? Colors.red : Colors.green,
                                      foregroundColor: Colors.white,
@@ -196,8 +202,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                        margin: const EdgeInsets.only(bottom: 16),
                        child: ListTile(
                          leading: const Icon(Icons.drive_eta, color: Colors.indigo),
-                         title: const Text("Vehicle & Documents"),
-                         subtitle: const Text("Manage DL, RC, and Car details"),
+                         title: const Text('Vehicle & Documents'),
+                         subtitle: const Text('Manage DL, RC, and Car details'),
                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                          onTap: () {
                            _showDriverDetailsDialog(context, ref, user.id, user.userMetadata);

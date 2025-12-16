@@ -12,6 +12,8 @@ class Ride {
   final double? originLng;
   final double? destLat;
   final double? destLng;
+  final double? currentLat;
+  final double? currentLng;
 
   Ride({
     required this.id,
@@ -27,6 +29,8 @@ class Ride {
     this.originLng,
     this.destLat,
     this.destLng,
+    this.currentLat,
+    this.currentLng,
   });
 
   factory Ride.fromJson(Map<String, dynamic> json) {
@@ -44,6 +48,8 @@ class Ride {
       originLng: json['origin_lng'] != null ? (json['origin_lng'] as num).toDouble() : null,
       destLat: json['dest_lat'] != null ? (json['dest_lat'] as num).toDouble() : null,
       destLng: json['dest_lng'] != null ? (json['dest_lng'] as num).toDouble() : null,
+      currentLat: json['current_lat'] != null ? (json['current_lat'] as num).toDouble() : null,
+      currentLng: json['current_lng'] != null ? (json['current_lng'] as num).toDouble() : null,
     );
   }
 
@@ -61,6 +67,8 @@ class Ride {
       'origin_lng': originLng,
       'dest_lat': destLat,
       'dest_lng': destLng,
+      'current_lat': currentLat,
+      'current_lng': currentLng,
     };
     // Include ID if it's not empty, otherwise let DB generate it
     if (id.isNotEmpty) {

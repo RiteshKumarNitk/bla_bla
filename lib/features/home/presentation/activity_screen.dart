@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bla_bla/features/auth/data/auth_repository_impl.dart';
 import 'package:bla_bla/features/ride/data/ride_repository.dart';
 import 'package:bla_bla/features/payment/data/wallet_repository.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
 class ActivityScreen extends ConsumerStatefulWidget {
@@ -17,18 +18,18 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("EMERGENCY SOS", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-        content: const Text("This will share your live location with emergency contacts and call police (112)."),
+        title: const Text('EMERGENCY SOS', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+        content: const Text('This will share your live location with emergency contacts and call police (112).'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton.icon(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
               onPressed: () {
                   Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Calling Emergency Services...")));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Calling Emergency Services...')));
               },
               icon: const Icon(Icons.call),
-              label: const Text("CALL 112")
+              label: const Text('CALL 112')
           )
         ],
       ),
@@ -43,7 +44,7 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
           context: context,
           builder: (ctx) => StatefulBuilder(
               builder: (context, setState) => AlertDialog(
-                  title: const Text("Rate Driver"),
+                  title: const Text('Rate Driver'),
                   content: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -56,12 +57,12 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                           ),
                           TextField(
                               controller: commentController,
-                              decoration: const InputDecoration(labelText: "Comment (Optional)"),
+                              decoration: const InputDecoration(labelText: 'Comment (Optional)'),
                           )
                       ],
                   ),
                   actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
                       ElevatedButton(
                           onPressed: () async {
                               final user = ref.read(authRepositoryProvider).currentUser;
@@ -74,10 +75,12 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                                   rating: rating,
                                   comment: commentController.text
                               );
-                              Navigator.pop(ctx);
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Review Submitted!")));
+                              if (context.mounted) {
+                                  Navigator.pop(ctx);
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Review Submitted!')));
+                              }
                           },
-                          child: const Text("Submit"),
+                          child: const Text('Submit'),
                       )
                   ],
               ),
@@ -88,7 +91,7 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authRepositoryProvider).currentUser;
-    if (user == null) return const Center(child: Text("Please login"));
+    if (user == null) return const Center(child: Text('Please login'));
 
     final bookingsAsync = ref.watch(bookingsProvider(user.id));
     final offeredAsync = ref.watch(offeredRidesProvider(user.id));
@@ -110,7 +113,7 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
             // BOOKINGS
             bookingsAsync.when(
                 data: (bookings) => bookings.isEmpty 
-                    ? const Center(child: Text("No bookings yet")) 
+                    ? const Center(child: Text('No bookings yet')) 
                     : ListView.builder(
                         itemCount: bookings.length,
                         itemBuilder: (ctx, i) {
@@ -156,15 +159,15 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
             // OFFERED
             offeredAsync.when(
                 data: (rides) => rides.isEmpty
-                    ? const Center(child: Text("No rides offered yet"))
+                    ? const Center(child: Text('No rides offered yet'))
                     : ListView.builder(
                         itemCount: rides.length,
                         itemBuilder: (ctx, i) {
                             final ride = rides[i];
                             return ListTile(
                                 leading: const Icon(Icons.local_taxi),
-                                title: Text("To ${ride.destination}"),
-                                subtitle: Text("${ride.availableSeats} seats left • ₹${ride.price.toInt()}"),
+                                title: Text('To ${ride.destination}'),
+                                subtitle: Text('${ride.availableSeats} seats left • ₹${ride.price.toInt()}'),
                                 trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
@@ -174,25 +177,44 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                                             onPressed: () {
                                                 context.push('/chat', extra: {
                                                     'rideId': ride.id,
-                                                    'title': "Ride to ${ride.destination}",
+                                                    'title': 'Ride to ${ride.destination}',
                                                 });
+                                            },
+                                        ),
+                                        // Update Location
+                                        IconButton(
+                                            icon: const Icon(Icons.my_location, color: Colors.blue),
+                                            tooltip: 'Update Live Location',
+                                            onPressed: () async {
+                                                LocationPermission permission = await Geolocator.checkPermission();
+                                                if (permission == LocationPermission.denied) {
+                                                    permission = await Geolocator.requestPermission();
+                                                    if (permission == LocationPermission.denied) return;
+                                                }
+                                                
+                                                final pos = await Geolocator.getCurrentPosition();
+                                                await ref.read(rideRepositoryProvider).updateRideLocation(ride.id, pos.latitude, pos.longitude);
+                                                
+                                                if (context.mounted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Location Updated: ${pos.latitude.toStringAsFixed(4)}, ${pos.longitude.toStringAsFixed(4)}')));
+                                                }
                                             },
                                         ),
                                         // Finish (Payment Simulation)
                                         IconButton(
                                             icon: const Icon(Icons.check_circle, color: Colors.green),
-                                            tooltip: "Finish Ride & Collect Earnings",
+                                            tooltip: 'Finish Ride & Collect Earnings',
                                             onPressed: () async {
                                                  final confirm = await showDialog<bool>(
                                                     context: context,
                                                     builder: (ctx) => AlertDialog(
-                                                        title: const Text("Finish Ride?"),
-                                                        content: Text("This will collect payment for all seats.\nEstimated Earnings: ₹${(ride.price * (ride.totalSeats - ride.availableSeats) * 0.9).toStringAsFixed(0)}"),
+                                                        title: const Text('Finish Ride?'),
+                                                        content: Text('This will collect payment for all seats.\nEstimated Earnings: ₹${(ride.price * (ride.totalSeats - ride.availableSeats) * 0.9).toStringAsFixed(0)}'),
                                                         actions: [
-                                                            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
+                                                            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
                                                             ElevatedButton(
                                                                 onPressed: () => Navigator.pop(ctx, true),
-                                                                child: const Text("Finish")
+                                                                child: const Text('Finish')
                                                             )
                                                         ],
                                                     )
@@ -202,7 +224,9 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                                                      // Calculate booked seats
                                                      final booked = ride.totalSeats - ride.availableSeats;
                                                      if (booked <= 0) {
-                                                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No passengers to charge!")));
+                                                         if (context.mounted) {
+                                                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No passengers to charge!')));
+                                                         }
                                                          return;
                                                      }
                                                      
@@ -212,7 +236,9 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                                                          amount: total, 
                                                          rideId: ride.id
                                                      );
-                                                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Ride Completed! Wallet updated.")));
+                                                     if (context.mounted) {
+                                                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ride Completed! Wallet updated.')));
+                                                     }
                                                  }
                                             },
                                         ),

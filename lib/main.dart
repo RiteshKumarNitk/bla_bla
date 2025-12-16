@@ -11,7 +11,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Load Env
-  await dotenv.load(fileName: ".env");
+  await dotenv.load(fileName: '.env');
   
   // Initialize Supabase (User needs to provide keys)
   await Supabase.initialize(

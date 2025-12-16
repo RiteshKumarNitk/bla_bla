@@ -41,7 +41,7 @@ class SearchResultsScreen extends ConsumerWidget {
           children: [
             Text('$origin → $destination', style: const TextStyle(fontSize: 16)),
             Text(
-              "${date.toLocal()}".split(' ')[0], 
+              '${date.toLocal()}'.split(' ')[0], 
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
             ),
           ],
@@ -82,7 +82,7 @@ class SearchResultsScreen extends ConsumerWidget {
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                       ),
                       Text(
-                         "₹${ride.price.toStringAsFixed(0)}",
+                         '₹${ride.price.toStringAsFixed(0)}',
                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.green),
                       ),
                     ],

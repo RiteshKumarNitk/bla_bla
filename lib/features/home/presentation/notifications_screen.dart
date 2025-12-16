@@ -22,10 +22,10 @@ class NotificationsScreen extends ConsumerWidget {
     final notifsAsync = ref.watch(myNotificationsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Notifications & Offers")),
+      appBar: AppBar(title: const Text('Notifications & Offers')),
       body: notifsAsync.when(
         data: (notifs) => notifs.isEmpty 
-            ? const Center(child: Text("No notifications yet"))
+            ? const Center(child: Text('No notifications yet'))
             : ListView.builder(
                 itemCount: notifs.length,
                 itemBuilder: (context, index) {
@@ -46,7 +46,7 @@ class NotificationsScreen extends ConsumerWidget {
                 },
             ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, s) => Center(child: Text("Error: $e")),
+        error: (e, s) => Center(child: Text('Error: $e')),
       ),
     );
   }

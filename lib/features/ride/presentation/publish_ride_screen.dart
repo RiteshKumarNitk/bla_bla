@@ -177,7 +177,7 @@ class _PublishRideScreenState extends ConsumerState<PublishRideScreen> {
                            );
                          },
                          loading: () => const LinearProgressIndicator(),
-                         error: (e, s) => Text("Error loading drivers: $e"),
+                         error: (e, s) => Text('Error loading drivers: $e'),
                        );
                      }
                    ),
@@ -199,7 +199,7 @@ class _PublishRideScreenState extends ConsumerState<PublishRideScreen> {
                           prefixIcon: Icon(Icons.access_time),
                         ),
                         child: Text(
-                          "${_departureTime.toLocal()}".split('.')[0],
+                          '${_departureTime.toLocal()}'.split('.')[0],
                         ),
                       ),
                     ),
