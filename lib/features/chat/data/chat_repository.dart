@@ -17,7 +17,7 @@ class ChatRepository {
         .from('messages')
         .stream(primaryKey: ['id'])
         .eq('ride_id', rideId)
-        .order('created_at')
+        .order('created_at', ascending: false)
         .map((data) {
           final currentUserId = _supabase.auth.currentUser?.id ?? '';
           return data.map((e) => Message.fromJson(e, currentUserId)).toList();

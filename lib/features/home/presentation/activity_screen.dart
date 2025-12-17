@@ -5,6 +5,7 @@ import 'package:bla_bla/features/ride/data/ride_repository.dart';
 import 'package:bla_bla/features/payment/data/wallet_repository.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import 'package:bla_bla/features/ride/domain/ride_model.dart';
 
 class ActivityScreen extends ConsumerStatefulWidget {
   const ActivityScreen({super.key});
@@ -88,6 +89,157 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
       );
   }
 
+  void _showPaymentInfoDialog(BuildContext context, Map<String, dynamic> booking, Map<String, dynamic>? ride) {
+      final price = ride?['price'] ?? 0;
+      final seats = booking['seats_booked'] ?? 1;
+      final total = price * seats;
+      final driverName = "Driver"; // In a real app, join driver profile
+
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Row(children: [Icon(Icons.payments, color: Colors.green), SizedBox(width: 8), Text('Payment Details')]),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Please pay cash to the driver upon arrival.', style: Theme.of(context).textTheme.bodyMedium),
+              const SizedBox(height: 16),
+              _buildDetailRow('Amount Due', '₹${total.toStringAsFixed(0)}'),
+              _buildDetailRow('Status', (booking['payment_status'] == 'paid') ? 'PAID' : 'PENDING', 
+                  color: (booking['payment_status'] == 'paid') ? Colors.green : Colors.orange),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+          ],
+        ),
+      );
+  }
+
+  Widget _buildDetailRow(String label, String value, {Color? color}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.grey)),
+          Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color)),
+        ],
+      ),
+    );
+  }
+
+  void _showPassengersDialog(BuildContext context, Ride ride) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        expand: false,
+        builder: (context, scrollController) => Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Passengers & Payments', style: Theme.of(context).textTheme.titleLarge),
+            ),
+            Expanded(
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: ref.read(rideRepositoryProvider).getRidePassengers(ride.id),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                  final bookings = snapshot.data!;
+                  
+                  if (bookings.isEmpty) {
+                    return const Center(child: Text('No passengers yet'));
+                  }
+
+                  return ListView.builder(
+                    controller: scrollController,
+                    itemCount: bookings.length,
+                    itemBuilder: (ctx, i) {
+                      final booking = bookings[i];
+                      final profile = booking['profiles'] ?? {};
+                      final name = profile['full_name'] ?? 'Passenger';
+                      final seats = booking['seats_booked'] as int;
+                      final total = ride.price * seats;
+                      final status = booking['status'] ?? 'pending';
+                      final paymentStatus = booking['payment_status'] ?? 'pending';
+                      final isPaid = paymentStatus == 'paid';
+
+                      return ListTile(
+                        leading: CircleAvatar(child: Text(name.isNotEmpty ? name[0] : 'P')),
+                        title: Text(name),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                             Text('$seats seats • Total: ₹${total.toStringAsFixed(0)}'),
+                             if (status == 'pending')
+                               const Text('Status: REQUESTED', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold))
+                             else
+                               Text('Status: ${status.toString().toUpperCase()}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                        trailing: status == 'pending' 
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                               IconButton(
+                                 icon: const Icon(Icons.check_circle, color: Colors.green, size: 32),
+                                 onPressed: () async {
+                                    try {
+                                        await ref.read(rideRepositoryProvider).approveBooking(booking['id'], ride.id, seats);
+                                        if (context.mounted) {
+                                            Navigator.pop(ctx);
+                                            _showPassengersDialog(context, ride);
+                                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Request Accepted!')));
+                                        }
+                                    } catch (e) {
+                                        if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                                    }
+                                 },
+                               ),
+                               IconButton(
+                                 icon: const Icon(Icons.cancel, color: Colors.red, size: 32),
+                                 onPressed: () async {
+                                     await ref.read(rideRepositoryProvider).rejectBooking(booking['id']);
+                                     if (context.mounted) {
+                                         Navigator.pop(ctx);
+                                         _showPassengersDialog(context, ride);
+                                     }
+                                 },
+                               ),
+                            ],
+                          )
+                        : isPaid 
+                          ? const Chip(label: Text('PAID'), backgroundColor: Colors.greenAccent)
+                          : ElevatedButton(
+                                onPressed: () async {
+                                  await ref.read(rideRepositoryProvider).updateBookingPaymentStatus(booking['id'], 'paid');
+                                  if (context.mounted) {
+                                     setState(() {}); 
+                                     Navigator.pop(ctx);
+                                     _showPassengersDialog(context, ride); 
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.orange,
+                                  foregroundColor: Colors.white,
+                                ),
+                                child: const Text('Mark Received'),
+                            ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authRepositoryProvider).currentUser;
@@ -113,8 +265,21 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
             // BOOKINGS
             bookingsAsync.when(
                 data: (bookings) => bookings.isEmpty 
-                    ? const Center(child: Text('No bookings yet')) 
-                    : ListView.builder(
+                    ? RefreshIndicator(
+                        onRefresh: () => ref.refresh(bookingsProvider(user.id).future),
+                        child: LayoutBuilder(
+                           builder: (context, constraints) => SingleChildScrollView(
+                             physics: const AlwaysScrollableScrollPhysics(),
+                             child: ConstrainedBox(
+                               constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                               child: const Center(child: Text('No bookings yet')),
+                             ),
+                           ),
+                         ),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: () => ref.refresh(bookingsProvider(user.id).future),
+                        child: ListView.builder(
                         itemCount: bookings.length,
                         itemBuilder: (ctx, i) {
                             final booking = bookings[i];
@@ -122,13 +287,27 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                             return ListTile(
                                 leading: const Icon(Icons.confirmation_number),
                                 title: Text("Ride to ${ride?['destination'] ?? 'Unknown'}"),
-                                subtitle: Text("Status: ${booking['status']}\nPrice: ₹${ride?['price'] ?? 0}"),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text("Status: ${booking['status'].toString().toUpperCase()}"),
+                                    Text(
+                                      "Payment: ${booking['payment_status']?.toString().toUpperCase() ?? 'PENDING'} • ₹${ride?['price'] ?? 0}",
+                                      style: TextStyle(
+                                        color: (booking['payment_status'] == 'paid') ? Colors.green : Colors.orange,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                isThreeLine: true,
                                 trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                         // Chat
                                         IconButton(
                                             icon: const Icon(Icons.chat_bubble_outline),
+                                            tooltip: 'Chat with Driver',
                                             onPressed: () {
                                                 if (ride == null) return;
                                                 context.push('/chat', extra: {
@@ -137,21 +316,31 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                                                 });
                                             },
                                         ),
-                                        // Rate (Simulated for any ride)
+                                        // Pay / Info
                                         IconButton(
-                                            icon: const Icon(Icons.star_outline, color: Colors.amber),
-                                            onPressed: () => _showRatingDialog(context, ref, ride!['id'], ride['driver_id']),
+                                            icon: Icon(
+                                              Icons.payments_outlined, 
+                                              color: (booking['payment_status'] == 'paid') ? Colors.green : Colors.orange
+                                            ),
+                                            tooltip: 'Payment Info',
+                                            onPressed: () => _showPaymentInfoDialog(context, booking, ride),
                                         ),
                                         // SOS (Simulated for active ride)
                                         IconButton(
                                             icon: const Icon(Icons.sos, color: Colors.red),
                                             onPressed: () => _showSOSDialog(context),
                                         ),
+                                        // Rate (Simulated for any ride)
+                                        IconButton(
+                                            icon: const Icon(Icons.star_outline, color: Colors.amber),
+                                            onPressed: () => _showRatingDialog(context, ref, ride!['id'], ride['driver_id']),
+                                        ),
                                     ],
                                 ),
                             );
                         }
                     ),
+                  ),
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (err, stack) => Center(child: Text('Error: $err')),
             ),
@@ -159,14 +348,27 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
             // OFFERED
             offeredAsync.when(
                 data: (rides) => rides.isEmpty
-                    ? const Center(child: Text('No rides offered yet'))
-                    : ListView.builder(
+                    ? RefreshIndicator(
+                         onRefresh: () => ref.refresh(offeredRidesProvider(user.id).future),
+                         child: LayoutBuilder(
+                           builder: (context, constraints) => SingleChildScrollView(
+                             physics: const AlwaysScrollableScrollPhysics(),
+                             child: ConstrainedBox(
+                               constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                               child: const Center(child: Text('No rides offered yet')),
+                             ),
+                           ),
+                         ),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: () => ref.refresh(offeredRidesProvider(user.id).future),
+                        child: ListView.builder(
                         itemCount: rides.length,
                         itemBuilder: (ctx, i) {
                             final ride = rides[i];
                             return ListTile(
                                 leading: const Icon(Icons.local_taxi),
-                                title: Text('To ${ride.destination}'),
+                                title: Text('${ride.origin} → ${ride.destination}'),
                                 subtitle: Text('${ride.availableSeats} seats left • ₹${ride.price.toInt()}'),
                                 trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -200,53 +402,19 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                                                 }
                                             },
                                         ),
-                                        // Finish (Payment Simulation)
+                                        // Payment / Passengers
                                         IconButton(
-                                            icon: const Icon(Icons.check_circle, color: Colors.green),
-                                            tooltip: 'Finish Ride & Collect Earnings',
-                                            onPressed: () async {
-                                                 final confirm = await showDialog<bool>(
-                                                    context: context,
-                                                    builder: (ctx) => AlertDialog(
-                                                        title: const Text('Finish Ride?'),
-                                                        content: Text('This will collect payment for all seats.\nEstimated Earnings: ₹${(ride.price * (ride.totalSeats - ride.availableSeats) * 0.9).toStringAsFixed(0)}'),
-                                                        actions: [
-                                                            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                                            ElevatedButton(
-                                                                onPressed: () => Navigator.pop(ctx, true),
-                                                                child: const Text('Finish')
-                                                            )
-                                                        ],
-                                                    )
-                                                 );
-                                                 
-                                                 if (confirm == true) {
-                                                     // Calculate booked seats
-                                                     final booked = ride.totalSeats - ride.availableSeats;
-                                                     if (booked <= 0) {
-                                                         if (context.mounted) {
-                                                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No passengers to charge!')));
-                                                         }
-                                                         return;
-                                                     }
-                                                     
-                                                     final total = ride.price * booked;
-                                                     await ref.read(walletRepositoryProvider).processEarnings(
-                                                         driverId: ride.driverId, 
-                                                         amount: total, 
-                                                         rideId: ride.id
-                                                     );
-                                                     if (context.mounted) {
-                                                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ride Completed! Wallet updated.')));
-                                                     }
-                                                 }
-                                            },
+                                            icon: const Icon(Icons.people_alt, color: Colors.green),
+                                            tooltip: 'Manage Passengers & Payments',
+                                            onPressed: () => _showPassengersDialog(context, ride),
                                         ),
+
                                     ],
                                 ),
                             );
                         }
                     ),
+                  ),
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (err, stack) => Center(child: Text('Error: $err')),
             ),
@@ -258,11 +426,6 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
 }
 
 // Providers
-final bookingsProvider = FutureProvider.family<List<Map<String, dynamic>>, String>((ref, userId) async {
+final bookingsProvider = FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((ref, userId) async {
   return ref.read(rideRepositoryProvider).getBookings(userId);
 });
-
-final offeredRidesProvider = FutureProvider.family<List<dynamic>, String>((ref, userId) async {
-  return ref.read(rideRepositoryProvider).getOfferedRides(userId);
-});
-

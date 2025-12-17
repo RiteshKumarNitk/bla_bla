@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:bla_bla/features/auth/data/auth_repository_impl.dart';
+import 'package:bla_bla/features/ride/data/ride_repository.dart';
+import 'package:bla_bla/features/ride/domain/ride_model.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -58,6 +60,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isDriver = userRole == 'driver' || userRole == 'admin';
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('BlaBla Clone', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_none, color: Colors.black),
+            onPressed: () => context.push('/notifications'),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -166,6 +179,97 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
               ),
+
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Recently Published', style: Theme.of(context).textTheme.titleLarge),
+                    TextButton(
+                      onPressed: () {
+                         context.push('/search', extra: {
+                            'origin': '',
+                            'destination': '',
+                            'date': DateTime.now(),
+                          });
+                      },
+                      child: const Text('See All'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              
+              SizedBox(
+                height: 200, // Horizontal list height
+                child: Consumer(
+                  builder: (context, ref, child) {
+                    final ridesAsync = ref.watch(nearbyRidesProvider);
+                    
+                    return ridesAsync.when(
+                      data: (rides) {
+                        if (rides.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Text('No rides available right now.'),
+                          );
+                        }
+                        return ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          itemCount: rides.length,
+                          itemBuilder: (context, index) {
+                             final ride = rides[index];
+                             return Container(
+                               width: 160,
+                               margin: const EdgeInsets.symmetric(horizontal: 8),
+                               child: Card(
+                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                 elevation: 3,
+                                 child: InkWell(
+                                   onTap: () {
+                                      context.push('/ride-detail', extra: ride);
+                                   },
+                                   child: Padding(
+                                     padding: const EdgeInsets.all(12),
+                                     child: Column(
+                                       crossAxisAlignment: CrossAxisAlignment.start,
+                                       children: [
+                                         Text(
+                                           '${ride.origin} → ${ride.destination}', 
+                                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                           maxLines: 1, overflow: TextOverflow.ellipsis,
+                                         ),
+                                         const SizedBox(height: 4),
+                                         Text(ride.departureTime.toString().split(' ')[0], style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                                         const Spacer(),
+                                         Text('₹${ride.price.toInt()}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
+                                         const SizedBox(height: 4),
+                                         Row(
+                                           children: [
+                                             const Icon(Icons.person, size: 16, color: Colors.grey),
+                                             const SizedBox(width: 4),
+                                             Expanded(child: Text(ride.driverName ?? 'Driver', style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis)),
+                                           ],
+                                         )
+                                       ],
+                                     ),
+                                   ),
+                                 ),
+                               ),
+                             );
+                          },
+                        );
+                      },
+                      loading: () => const Center(child: CircularProgressIndicator()),
+                      error: (err, stack) => Center(child: Text('Error: $err')),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 24),
             ],
           ),
         ),

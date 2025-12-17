@@ -104,6 +104,10 @@ class _PublishRideScreenState extends ConsumerState<PublishRideScreen> {
       
       await ref.read(rideRepositoryProvider).createRide(ride);
       
+      // Refresh lists
+      ref.invalidate(nearbyRidesProvider);
+      ref.invalidate(offeredRidesProvider(actualDriverId));
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ride published!')));
         context.pop();

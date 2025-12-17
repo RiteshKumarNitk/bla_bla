@@ -43,19 +43,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 if (messages.isEmpty) {
                   return const Center(child: Text('Start the conversation!'));
                 }
-                return ListView.builder(
-                  reverse: true, // Show newest at bottom if we reversed the list, but stream is ordered asc. 
-                  // Usually chat lists are reversed (bottom to top). 
-                  // Let's modify the stream or builder. 
-                  // Supabase stream comes typically as snapshot. We ordered by created_at.
-                  // So last item is newest. Key is to stick to bottom.
-                  itemCount: messages.length,
-                  padding: const EdgeInsets.all(16),
-                  itemBuilder: (context, index) {
-                    final message = messages[index];
-                    return _buildMessageBubble(message);
-                  },
-                );
+                  return ListView.builder(
+                    reverse: true, // List starts from bottom
+                    itemCount: messages.length,
+                    padding: const EdgeInsets.all(16),
+                    itemBuilder: (context, index) {
+                      final message = messages[index];
+                      return _buildMessageBubble(message);
+                    },
+                  );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, stack) => Center(child: Text('Error: $err')),

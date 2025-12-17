@@ -31,7 +31,14 @@ class Ride {
     this.destLng,
     this.currentLat,
     this.currentLng,
+    this.driverName,
+    this.driverRating,
+    this.driverTotalReviews,
   });
+
+  final String? driverName;
+  final double? driverRating;
+  final int? driverTotalReviews;
 
   factory Ride.fromJson(Map<String, dynamic> json) {
     return Ride(
@@ -50,6 +57,9 @@ class Ride {
       destLng: json['dest_lng'] != null ? (json['dest_lng'] as num).toDouble() : null,
       currentLat: json['current_lat'] != null ? (json['current_lat'] as num).toDouble() : null,
       currentLng: json['current_lng'] != null ? (json['current_lng'] as num).toDouble() : null,
+      driverName: json['profiles'] != null ? json['profiles']['full_name'] : null,
+      driverRating: 0.0, 
+      driverTotalReviews: 0,
     );
   }
 
@@ -75,6 +85,47 @@ class Ride {
       map['id'] = id;
     }
     return map;
+  }
+  Ride copyWith({
+    String? id,
+    String? driverId,
+    String? origin,
+    String? destination,
+    DateTime? departureTime,
+    double? price,
+    int? totalSeats,
+    int? availableSeats,
+    String? carModel,
+    double? originLat,
+    double? originLng,
+    double? destLat,
+    double? destLng,
+    double? currentLat,
+    double? currentLng,
+    String? driverName,
+    double? driverRating,
+    int? driverTotalReviews,
+  }) {
+    return Ride(
+      id: id ?? this.id,
+      driverId: driverId ?? this.driverId,
+      origin: origin ?? this.origin,
+      destination: destination ?? this.destination,
+      departureTime: departureTime ?? this.departureTime,
+      price: price ?? this.price,
+      totalSeats: totalSeats ?? this.totalSeats,
+      availableSeats: availableSeats ?? this.availableSeats,
+      carModel: carModel ?? this.carModel,
+      originLat: originLat ?? this.originLat,
+      originLng: originLng ?? this.originLng,
+      destLat: destLat ?? this.destLat,
+      destLng: destLng ?? this.destLng,
+      currentLat: currentLat ?? this.currentLat,
+      currentLng: currentLng ?? this.currentLng,
+      driverName: driverName ?? this.driverName,
+      driverRating: driverRating ?? this.driverRating,
+      driverTotalReviews: driverTotalReviews ?? this.driverTotalReviews,
+    );
   }
 }
 

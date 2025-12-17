@@ -11,32 +11,28 @@ create table messages (
 alter table messages enable row level security;
 
 -- Policies
-create policy "Users can view messages for rides they are part of." on messages
+
+-- Allow any authenticated user to view messages if they are part of the ride
+-- Either they are the driver of the ride OR they have a booking for the ride
+create policy "Users can view messages" on messages
   for select using (
+    auth.uid() = (select driver_id from rides where id = messages.ride_id)
+    or
     exists (
       select 1 from bookings
       where bookings.ride_id = messages.ride_id
       and bookings.passenger_id = auth.uid()
-    )
-    or
-    exists (
-      select 1 from rides
-      where rides.id = messages.ride_id
-      and rides.driver_id = auth.uid()
     )
   );
 
-create policy "Users can insert messages for rides they are part of." on messages
+-- Allow any authenticated user to insert messages if they are part of the ride
+create policy "Users can insert messages" on messages
   for insert with check (
+    auth.uid() = (select driver_id from rides where id = messages.ride_id)
+    or
     exists (
       select 1 from bookings
       where bookings.ride_id = messages.ride_id
       and bookings.passenger_id = auth.uid()
-    )
-    or
-    exists (
-      select 1 from rides
-      where rides.id = messages.ride_id
-      and rides.driver_id = auth.uid()
     )
   );

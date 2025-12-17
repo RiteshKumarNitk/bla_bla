@@ -5,12 +5,13 @@ import 'package:bla_bla/features/ride/domain/ride_model.dart';
 import 'package:go_router/go_router.dart';
 
 // Provider for search parameters
-final searchRidesProvider = FutureProvider.family<List<Ride>, Map<String, dynamic>>((ref, params) async {
+// Provider for search parameters using Record for value equality
+final searchRidesProvider = FutureProvider.family<List<Ride>, ({String origin, String destination, DateTime date})>((ref, params) async {
   final repository = ref.watch(rideRepositoryProvider);
   return repository.searchRides(
-    params['origin'],
-    params['destination'],
-    params['date'],
+    params.origin,
+    params.destination,
+    params.date,
   );
 });
 
@@ -28,11 +29,11 @@ class SearchResultsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ridesAsyncValue = ref.watch(searchRidesProvider({
-      'origin': origin,
-      'destination': destination,
-      'date': date,
-    }));
+    final ridesAsyncValue = ref.watch(searchRidesProvider((
+      origin: origin,
+      destination: destination,
+      date: date,
+    )));
 
     return Scaffold(
       appBar: AppBar(
@@ -71,8 +72,10 @@ class SearchResultsScreen extends ConsumerWidget {
                 margin: const EdgeInsets.only(bottom: 16),
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(16),
-                  leading: const CircleAvatar(
-                    child: Icon(Icons.person),
+                  leading: CircleAvatar(
+                    child: Text(ride.driverName != null && ride.driverName!.isNotEmpty 
+                        ? ride.driverName![0].toUpperCase() 
+                        : 'D'),
                   ),
                   title: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -81,9 +84,27 @@ class SearchResultsScreen extends ConsumerWidget {
                         "${ride.departureTime.hour}:${ride.departureTime.minute.toString().padLeft(2, '0')}",
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                       ),
-                      Text(
-                         '₹${ride.price.toStringAsFixed(0)}',
-                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.green),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                             '₹${ride.price.toStringAsFixed(0)}',
+                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.green),
+                          ),
+                          if (ride.departureTime.difference(DateTime.now()).inMinutes > 0 && 
+                              ride.departureTime.difference(DateTime.now()).inMinutes < 60)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'Leaving soon',
+                                style: TextStyle(fontSize: 10, color: Colors.orange, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                        ],
                       ),
                     ],
                   ),
@@ -118,12 +139,15 @@ class SearchResultsScreen extends ConsumerWidget {
                           const Icon(Icons.event_seat, size: 16, color: Colors.grey),
                           const SizedBox(width: 4),
                           Text('${ride.availableSeats} seats left'),
+                          const Spacer(),
+                          if(ride.driverName != null)
+                             Text(ride.driverName!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))
                         ],
                       ),
                     ],
                   ),
                   onTap: () {
-                    context.push('/ride_detail', extra: ride);
+                    context.push('/ride-detail', extra: ride);
                   },
                 ),
               );

@@ -11,6 +11,7 @@ import 'package:bla_bla/features/ride/domain/ride_model.dart';
 import 'package:bla_bla/features/chat/presentation/chat_screen.dart';
 import 'package:bla_bla/features/home/presentation/notifications_screen.dart';
 import 'package:bla_bla/features/payment/presentation/wallet_screen.dart';
+import 'package:bla_bla/features/home/presentation/driver_profile_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
@@ -57,7 +58,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/ride_detail',
+        path: '/ride-detail',
         builder: (context, state) {
           final ride = state.extra as Ride;
           return RideDetailScreen(ride: ride);
@@ -80,6 +81,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/wallet',
         builder: (context, state) => const WalletScreen(),
+      ),
+      GoRoute(
+        path: '/driver_profile',
+        builder: (context, state) {
+          final extras = state.extra as Map<String, dynamic>;
+          return DriverProfileScreen(
+            driverId: extras['id'],
+            driverName: extras['name'],
+          );
+        },
       ),
     ],
   );
